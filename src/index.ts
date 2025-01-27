@@ -317,6 +317,10 @@ export class Xumm extends EventEmitter {
 
   public runtime: Runtime = _runtime;
 
+  public state: {
+    account: string,
+    signedIn: boolean,
+  };
   public user: UnifiedUserData;
   public environment: Environment;
   public payload?: Promisified<Payload>;
@@ -416,6 +420,12 @@ export class Xumm extends EventEmitter {
         this.on("retrieving", () => resolve(undefined))
       ),
     };
+
+    this.state = {
+      account: '',
+      signedIn: false,
+    };
+
     /**
      * Xumm SDK mapped
      */
@@ -557,6 +567,11 @@ export class Xumm extends EventEmitter {
         if (ott) {
           _ott = ott;
 
+          if (_ott?.account) {
+            this.state.account = _ott.account;
+            this.state.signedIn = true;
+          }
+
           // Mock, so browser code works in xApp as well
           this.emit("retrieved");
           this.emit("success");
@@ -655,6 +670,10 @@ export class Xumm extends EventEmitter {
                 if (state?.sdk && !_classes?.XummSdkJwt) {
                   Object.assign(_classes, { XummSdkJwt: state.sdk });
                   Object.assign(_me, { ...(state?.me || {}) });
+                  if (state?.me?.account) {
+                    this.state.account = state.me.account;
+                    this.state.signedIn = true;
+                  }
                 }
                 if (state?.jwt && _jwt === "") {
                   _jwt = state.jwt;
@@ -771,6 +790,9 @@ export class Xumm extends EventEmitter {
     }
 
     let downgradeJwtLogin = false;
+
+    this.state.account = '';
+    this.state.signedIn = false
 
     if (
       typeof this.apiKeyOrJwt === "string" &&
